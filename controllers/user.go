@@ -3,6 +3,7 @@ package controllers
 import (
 	"BeeApi/models"
 	"encoding/json"
+	"time"
 
 	"github.com/astaxie/beego"
 )
@@ -10,6 +11,39 @@ import (
 // Operations about Users
 type UserController struct {
 	beego.Controller
+}
+
+type registerReqBody struct {
+	Email     string
+	Password  string
+	BirthDate string
+	Gender    string
+}
+
+// @Title Register
+// @Description create users
+// @Param	body		body 	registerReqBody	true		"body for registering user"
+// @Success 200 {int} models.User.Id
+// @Failure 403 body is empty
+// @router /register [post]
+func (u *UserController) Register() {
+
+	var regObj registerReqBody
+
+	json.Unmarshal(u.Ctx.Input.RequestBody, &regObj)
+	beego.Debug(regObj)
+	user := new(models.User)
+	profile := new(models.Profile)
+	user.Email = regObj.Email
+	user.Password = regObj.Password
+	profile.BirthDate, _ = time.Parse("2006-01-02", regObj.BirthDate) // https://stackoverflow.com/a/25845833/2894239
+	profile.Gender = regObj.Gender
+
+	uid := models.RegisterUser(user, profile)
+	beego.Debug(profile)
+	beego.Debug(user)
+	u.Data["json"] = map[string]string{"uid": string(uid)}
+	u.ServeJSON()
 }
 
 // @Title CreateUser
@@ -116,4 +150,3 @@ func (u *UserController) Logout() {
 	u.Data["json"] = "logout success"
 	u.ServeJSON()
 }
-
